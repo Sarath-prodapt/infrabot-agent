@@ -1,0 +1,52 @@
+# Local data stores / sensitive files
+persistdb/
+*.sqlite3
+
+
+# IDE and editor specific
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Git
+.git/
+
+# Test related
+tests/
+coverage.xml
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# Python specific
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.iml
+*.egg-info/
+
+# Virtual environments
+venv/
+.venv/
+
+# Build artifacts / Distribution
+build/
+dist/
+
+# Project specific / Other
+k8s/
+README.md
+# Makefile # If you use Makefiles
+# Makerfile # If this is a legitimate file and not a typo for Makefile
+
+# Docker specific files (not needed inside the image)
+Dockerfile
+.dockerignore
+
+# Environment files
+*.env
+.env.*
