@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: infrabot-kube
+  name: infrabot-dep
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: infrabot
+  template:
+    metadata:
+      labels:
+        app: infrabot
+    spec:
+      containers:
+        - name: web
+          image: itrepo.azurecr.io/infrabot-agent:1.0
+          ports:
+            - containerPort: 8000
+          env:
+            - name: AZURE_OPENAI_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: kv-env
+                  key: AZURE_OPENAI_ENDPOINT # Ensure this key exists in your kv-env secret
+            - name: AZURE_OPENAI_API_KEY # Standardized name
+              valueFrom:
+                secretKeyRef:
+                  name: kv-env
+                  key: AZURE_OPENAI_API_KEY # Ensure this key (with this name) exists in your kv-env secret
+            - name: AZURE_OPENAI_DEPLOYMENT
+              valueFrom:
+                secretKeyRef:
+                  name: kv-env
+                  key: AZURE_OPENAI_DEPLOYMENT # Ensure this key exists in your kv-env secret
+            - name: AZURE_OPENAI_API_VERSION
+              valueFrom:
+                secretKeyRef:
+                  name: kv-env
+                  key: AZURE_OPENAI_API_VERSION # Add this to your kv-env secret
+            - name: AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: kv-env
+                  key: AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME # Add this to your kv-env secret
+            - name: AZURE_OPENAI_EMBEDDING_MODEL_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: kv-env
+                  key: AZURE_OPENAI_EMBEDDING_MODEL_NAME # Add this to your kv-env secret
+            - name: OPENAI_MODEL_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: kv-env
+                  key: OPENAI_MODEL_NAME # Add this to your kv-env secret, or rely on app default
+            - name: INDEX_PATH
+              value: /app/knowledgebase # Matches Dockerfile COPY and load_data.py fallback
+            - name: PERSIST_PATH
+              value: /app/persistdb_data # Path inside the container for ChromaDB
+          volumeMounts:
+            - name: chromadb-persistent-storage
+              mountPath: /app/persistdb_data # Mount the PVC here
+      volumes:
+        - name: chromadb-persistent-storage
+          persistentVolumeClaim:
+            claimName: infrabot-chromadb-pvc # Name of your PVC

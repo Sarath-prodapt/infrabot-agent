@@ -1,0 +1,13 @@
+.PHONY: run test lint build
+
+run:
+	poetry run uvicorn app.main:app --reload
+
+test:
+	poetry run pytest -q
+
+lint:
+	poetry run ruff check app tests
+
+build:
+	docker build -t infrabot-agent:local .
