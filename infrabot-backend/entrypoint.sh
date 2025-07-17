@@ -2,30 +2,46 @@
 
 set -e
 
-# Default values
-MILVUS_HOST_DEFAULT="milvus-standalone"
-MILVUS_PORT_DEFAULT="19530"
+# Azure Container Apps service discovery
+TARGET_HOST=${MILVUS_HOST:-localhost}
+TARGET_PORT=${MILVUS_PORT:-19530}
 
-# Use environment variables if set, otherwise use defaults
-TARGET_HOST=${MILVUS_HOST:-$MILVUS_HOST_DEFAULT}
-TARGET_PORT=${MILVUS_PORT:-$MILVUS_PORT_DEFAULT}
+echo "Starting InfraBot Backend for Azure Container Apps..."
+echo "Environment: ${ENVIRONMENT:-development}"
+echo "Connecting to Milvus at $TARGET_HOST:$TARGET_PORT"
 
-echo "Waiting for Milvus to propagate..."
-sleep 10  # Reduced from 40 seconds
-
-echo "Waiting for Milvus to start at $TARGET_HOST:$TARGET_PORT..."
-timeout=60
+# Wait for Milvus service to be available (with shorter timeout for faster startup)
+echo "Waiting for Milvus service to be ready..."
+timeout=60  # Reduced timeout
 count=0
-until nc -z -w 2 "$TARGET_HOST" "$TARGET_PORT" || [ $count -eq $timeout ]; do
-  echo "Milvus is unavailable - sleeping (attempt $count/$timeout)"
+
+# Check if Milvus is available, but don't block startup
+while [ $count -lt $timeout ]; do
+  if nc -z -w 2 "$TARGET_HOST" "$TARGET_PORT" 2>/dev/null; then
+    echo "Successfully connected to Milvus at $TARGET_HOST:$TARGET_PORT"
+    break
+  fi
+  
+  if [ $((count % 10)) -eq 0 ]; then
+    echo "Waiting for Milvus at $TARGET_HOST:$TARGET_PORT (attempt $count/$timeout)"
+  fi
+  
   sleep 2
-  count=$((count + 1))
+  count=$((count + 2))
 done
 
-if [ $count -eq $timeout ]; then
-  echo "Warning: Milvus connection timeout. Starting application anyway."
-else
-  echo "Milvus port is open. Starting application."
+if [ $count -ge $timeout ]; then
+  echo "Warning: Could not connect to Milvus at $TARGET_HOST:$TARGET_PORT within timeout"
+  echo "Starting application anyway - Milvus connection will be retried at runtime"
 fi
 
-exec uvicorn app.main:app --host 0.0.0.0 --port 8000
+# Start the FastAPI application with Azure-optimized settings
+echo "Starting FastAPI application..."
+exec uvicorn app.main:app \
+  --host 0.0.0.0 \
+  --port 8000 \
+  --workers 1 \
+  --log-level info \
+  --access-log \
+  --timeout-keep-alive 65 \
+  --use-colors

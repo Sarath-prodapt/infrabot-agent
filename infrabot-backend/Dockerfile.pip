@@ -1,0 +1,73 @@
+FROM python:3.12-slim
+LABEL authors="sarath.r"
+
+# Ensure python output is sent straight to terminal
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    netcat-openbsd \
+    curl \
+    build-essential \
+    && update-ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN groupadd -r appgroup && useradd --no-log-init -r -g appgroup appuser
+
+WORKDIR /app
+
+# Install Python dependencies directly
+RUN pip install --no-cache-dir \
+    fastapi>=0.115.12,<0.116.0 \
+    uvicorn>=0.34.2,<0.35.0 \
+    openai>=1.82.1,<2.0.0 \
+    python-dotenv>=1.1.0,<2.0.0 \
+    pydantic>=2.11.5,<3.0.0 \
+    langchain>=0.3.25,<0.4.0 \
+    langchain-community>=0.3.25,<0.4.0 \
+    langchain-openai>=0.3.22,<0.4.0 \
+    langchain-milvus>=0.2.1,<0.3.0 \
+    unstructured[pdf]==0.17.2 \
+    unstructured[ocr]==0.17.2 \
+    pdf2image>=1.17.0,<2.0.0 \
+    pdfminer-six==20250506 \
+    unstructured-inference==0.8.10 \
+    pi-heif>=0.22.0,<0.23.0 \
+    pymilvus>=2.5.7,<3.0 \
+    pytesseract==0.3.10 \
+    unstructured-pytesseract>=0.3.15,<0.4.0 \
+    setuptools<81
+
+# Copy source code
+COPY app ./app
+COPY knowledgebase ./knowledgebase
+COPY manage.py ./manage.py
+COPY entrypoint.sh /app/entrypoint.sh
+
+# Make entrypoint executable
+RUN chmod +x /app/entrypoint.sh
+
+# Set environment variables for Azure Container Apps
+ENV MPLCONFIGDIR=/tmp/matplotlib
+ENV HOME=/tmp
+ENV MILVUS_HOST=${MILVUS_HOST:-localhost}
+ENV MILVUS_PORT=${MILVUS_PORT:-19530}
+ENV BACKEND_URL=${BACKEND_URL:-http://localhost:8000}
+ENV ENVIRONMENT=${ENVIRONMENT:-development}
+
+# Create writable directories
+RUN mkdir -p /tmp/matplotlib && chmod -R 777 /tmp/matplotlib
+
+# Ensure proper ownership
+RUN chown -R appuser:appgroup /app
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+EXPOSE 8000
+USER appuser
+ENTRYPOINT ["/app/entrypoint.sh"]

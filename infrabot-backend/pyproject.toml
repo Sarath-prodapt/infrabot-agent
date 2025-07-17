@@ -40,7 +40,6 @@ name = "infrabot-agent"
 version = "0.1.1"
 description = "LLM-powered IT help desk service"
 authors = ["Sarath R <sarath.r@prodapt.com>"] 
-readme = "README.md" # Mirroring from [project]
 packages = [
     {include = "app", from = "."}
 ]
@@ -58,23 +57,16 @@ langchain-openai = ">=0.3.22,<0.4.0"
 langchain-milvus = ">=0.2.1,<0.3.0"
 setuptools = "<81"
 pypdf = ">=4.0.0,<5.0.0"
-pdfminer-six = "==20250506"
+pdfminer-six = "20250506"
 pi-heif = "^0.22.0"
 pdf2image = ">=1.17.0,<2.0.0"
 unstructured-inference = "^0.8.10"
 unstructured = {version = "^0.17.2", extras = ["ocr"]}
 pymilvus = "^2.5.7"
 pytesseract = "^0.3.10"
-torch = {version = "2.7.1+cpu", source = "pytorch_cpu"}
-torchvision = {version = "0.22.1+cpu", source = "pytorch_cpu"}
-
-
-[tool.poetry.scripts]
-infrabot-agent = "app.main:app"
-
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.group.dev.dependencies]
@@ -101,3 +93,5 @@ target-version = ["py312"]
 python_version = "3.12"
 strict = true
 ignore_missing_imports = true
+
+
