@@ -1,9 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import LoginScreen from "@/components/login-screen"
-import ChatInterface from "@/components/chat-interface"
-import { ThemeProvider } from "@/components/theme-provider"
+import LoginScreen from "../components/login-screen"
+import ChatInterface from "../components/chat-interface"
+import { ThemeProvider } from "../components/theme-provider"
 
 export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
